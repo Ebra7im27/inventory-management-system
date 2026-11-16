@@ -1,0 +1,583 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import {
+  LayoutDashboard,
+  Smartphone,
+  Laptop,
+  Plus,
+  ShoppingCart,
+  Package,
+  Users,
+  ChartNoAxesCombined,
+  Settings,
+  Search,
+  Bell,
+  Menu,
+  X,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Boxes,
+  ArrowUpLeft,
+  ArrowDownLeft,
+  ChevronLeft,
+  CalendarDays,
+  CirclePlus,
+  ScanBarcode,
+  ClipboardList,
+  Tablet
+} from "lucide-react";
+
+const navigation = [
+  { name: "لوحة التحكم", icon: LayoutDashboard },
+  { name: "كل الأجهزة", icon: Smartphone },
+  { name: "إضافة جهاز", icon: CirclePlus },
+  { name: "المبيعات", icon: ShoppingCart },
+  { name: "المشتريات", icon: Package },
+  { name: "العملاء والموردون", icon: Users },
+  { name: "التقارير والأرباح", icon: ChartNoAxesCombined },
+  { name: "الإعدادات", icon: Settings },
+];
+
+const devices = [
+  {
+    id: 1,
+    name: "iPhone 15 Pro Max",
+    storage: "256 GB",
+    color: "Natural Titanium",
+    price: 140000,
+    status: "موجود",
+    type: "موبايل",
+  },
+  {
+    id: 2,
+    name: "Samsung S24 Ultra",
+    storage: "512 GB",
+    color: "Titanium Black",
+    price: 85000,
+    status: "موجود",
+    type: "موبايل",
+  },
+  {
+    id: 3,
+    name: "iPad Pro M4",
+    storage: "256 GB",
+    color: "Space Black",
+    price: 65000,
+    status: "اتباع",
+    type: "iPad",
+  },
+  {
+    id: 4,
+    name: "iPhone 14 Pro",
+    storage: "128 GB",
+    color: "Deep Purple",
+    price: 62000,
+    status: "موجود",
+    type: "موبايل",
+  },
+  {
+    id: 5,
+    name: "Samsung Galaxy Tab S10",
+    storage: "256 GB",
+    color: "Gray",
+    price: 32000,
+    status: "اتباع",
+    type: "تابلت",
+  },
+];
+
+const stats = [
+  {
+    title: "أجهزة بالمخزن",
+    value: "24",
+    note: "جهاز متاح للبيع",
+    icon: Boxes,
+    color: "blue",
+    trend: "+3",
+  },
+  {
+    title: "إجمالي المبيعات",
+    value: "18",
+    note: "جهاز تم بيعه",
+    icon: ShoppingCart,
+    color: "purple",
+    trend: "+5",
+  },
+  {
+    title: "صافي الأرباح",
+    value: "32,500",
+    note: "جنيه مصري",
+    icon: TrendingUp,
+    color: "green",
+    trend: "+12%",
+  },
+  {
+    title: "قيمة المخزون",
+    value: "420,000",
+    note: "جنيه مصري",
+    icon: Wallet,
+    color: "orange",
+    trend: "مخزون",
+  },
+];
+
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("en-US").format(price) + " ج.م";
+
+export default function Home() {
+  const router = useRouter();
+  const [activePage, setActivePage] = useState("لوحة التحكم");
+  const [search, setSearch] = useState("");
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const filteredDevices = useMemo(() => {
+    return devices.filter((device) =>
+      `${device.name} ${device.color} ${device.storage}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    );
+  }, [search]);
+
+  const handleNavigation = (name: string) => {
+    if (name === "إضافة جهاز") {
+      setMobileMenu(false);
+      router.push("/devices/new");
+      return;
+    }
+
+    setActivePage(name);
+    setMobileMenu(false);
+  };
+
+  return (
+    <main className="min-h-screen bg-[#f5f7fb]">
+      {/* Mobile overlay */}
+      {mobileMenu && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={() => setMobileMenu(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed right-0 top-0 z-50 flex h-screen w-[260px] flex-col border-l border-slate-200 bg-white transition-transform duration-300 ${
+          mobileMenu ? "translate-x-0" : "translate-x-full"
+        } lg:translate-x-0`}
+      >
+        <div className="flex h-[82px] items-center justify-between border-b border-slate-100 px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#17283d] text-white">
+              <Smartphone size={24} />
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight text-[#17283d]">
+                Mobile <span className="text-[#238fcb]">Stock</span>
+              </h1>
+              <p className="text-[11px] text-slate-400">Inventory Management</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setMobileMenu(false)}
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
+          >
+            <X size={21} />
+          </button>
+        </div>
+
+        <div className="px-4 pt-7">
+          <p className="mb-3 px-3 text-[11px] font-bold text-slate-400">
+            القائمة الرئيسية
+          </p>
+
+          <nav className="space-y-1">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              const active = activePage === item.name;
+
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => handleNavigation(item.name)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
+                    active
+                      ? "bg-[#eaf4fb] text-[#238fcb]"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-[#17283d]"
+                  }`}
+                >
+                  <Icon size={19} />
+                  <span>{item.name}</span>
+                  {active && (
+                    <span className="mr-auto h-2 w-2 rounded-full bg-[#238fcb]" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="mt-auto p-4">
+          <div className="rounded-2xl bg-[#17283d] p-4 text-white">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/10">
+              <ScanBarcode size={20} />
+            </div>
+            <p className="text-sm font-bold">إدارة أسهل لمخزونك</p>
+            <p className="mt-1 text-xs leading-6 text-slate-300">
+              تابع كل جهاز من لحظة الشراء حتى البيع.
+            </p>
+            <p className="mt-3 text-[10px] text-slate-400">Mobile Stock v1.0</p>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <section className="min-h-screen lg:mr-[260px]">
+        {/* Header */}
+        <header className="sticky top-0 z-30 flex h-[82px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-7 lg:px-9">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenu(true)}
+              className="rounded-xl border border-slate-200 p-2.5 text-slate-600 lg:hidden"
+            >
+              <Menu size={21} />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-[#17283d]">{activePage}</h2>
+              <p className="hidden text-xs text-slate-400 sm:block">
+                أهلاً بيك، تابع حركة المحل من مكان واحد
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden h-10 w-60 items-center gap-2 rounded-xl bg-slate-50 px-3 md:flex">
+              <Search size={17} className="text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="ابحث عن جهاز..."
+                className="w-full bg-transparent text-xs outline-none placeholder:text-slate-400"
+              />
+            </div>
+
+            <button
+              className="relative rounded-xl border border-slate-200 p-2.5 text-slate-500 hover:bg-slate-50"
+              aria-label="الإشعارات"
+            >
+              <Bell size={19} />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-white bg-red-500" />
+            </button>
+
+            <div className="flex items-center gap-2 border-r border-slate-200 pr-3 sm:pr-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eaf4fb] text-sm font-bold text-[#238fcb]">
+                م
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-xs font-bold text-[#17283d]">مدير المحل</p>
+                <p className="text-[10px] text-slate-400">مدير النظام</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Dashboard */}
+        <div className="mx-auto max-w-[1500px] p-4 sm:p-7 lg:p-9">
+          {/* Welcome */}
+          <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <p className="mb-1 text-sm text-slate-500">نظرة عامة</p>
+              <h2 className="text-2xl font-extrabold text-[#17283d]">
+                لوحة التحكم 👋
+              </h2>
+              <p className="mt-2 text-sm text-slate-400">
+                إليك ملخص حركة المحل وأداء المبيعات.
+              </p>
+            </div>
+
+            <button
+              // onClick={() => setShowAddModal(true)}
+              onClick={() => router.push("/devices/new")}
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#238fcb] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-[#187eb7]"
+            >
+              <Plus size={19} />
+              إضافة جهاز جديد
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+
+              const colors = {
+                blue: "bg-blue-50 text-blue-600",
+                purple: "bg-purple-50 text-purple-600",
+                green: "bg-green-50 text-green-600",
+                orange: "bg-orange-50 text-orange-600",
+              };
+
+              return (
+                <div
+                  key={stat.title}
+                  className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                        colors[stat.color as keyof typeof colors]
+                      }`}
+                    >
+                      <Icon size={23} />
+                    </div>
+                    <span className="rounded-lg bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500">
+                      {stat.trend}
+                    </span>
+                  </div>
+
+                  <p className="text-sm font-medium text-slate-500">
+                    {stat.title}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-extrabold text-[#17283d]">
+                    {stat.value}
+                    {stat.title.includes("جهاز") ||
+                    stat.title.includes("المبيعات")
+                      ? " "
+                      : ""}
+                  </h3>
+                  <p className="mt-1 text-[11px] text-slate-400">{stat.note}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Quick actions */}
+          <div className="mb-7">
+            <h3 className="mb-4 text-base font-bold text-[#17283d]">
+              العمليات السريعة
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[
+                {
+                  title: "إضافة موبايل",
+                  icon: Smartphone,
+                  color: "text-blue-600 bg-blue-50",
+                },
+                {
+                  title: "إضافة iPad / تابلت",
+                  icon: Tablet,
+                  color: "text-purple-600 bg-purple-50",
+                },
+                {
+                  title: "تسجيل عملية بيع",
+                  icon: ShoppingCart,
+                  color: "text-green-600 bg-green-50",
+                },
+                {
+                  title: "عرض التقارير",
+                  icon: ChartNoAxesCombined,
+                  color: "text-orange-600 bg-orange-50",
+                },
+              ].map((action) => {
+                const Icon = action.icon;
+
+                return (
+                  <button
+                    key={action.title}
+                    onClick={() => {
+                      if (action.title.includes("إضافة")) {
+                        router.push("/devices/new");
+                      } else {
+                        setActivePage(
+                          action.title.includes("بيع")
+                            ? "المبيعات"
+                            : "التقارير والأرباح",
+                        );
+                      }
+                    }}
+                    className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-right shadow-sm transition hover:border-blue-200 hover:shadow-md"
+                  >
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${action.color}`}
+                    >
+                      <Icon size={21} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 sm:text-sm">
+                      {action.title}
+                    </span>
+                    <ChevronLeft size={16} className="mr-auto text-slate-300" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Recent devices */}
+          <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <div className="flex flex-col justify-between gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center">
+              <div>
+                <h3 className="font-bold text-[#17283d]">أحدث الأجهزة</h3>
+                <p className="mt-1 text-xs text-slate-400">
+                  متابعة آخر الأجهزة المسجلة في المحل
+                </p>
+              </div>
+
+              <button
+                onClick={() => setActivePage("كل الأجهزة")}
+                className="flex items-center gap-1 text-xs font-bold text-[#238fcb] hover:underline"
+              >
+                عرض كل الأجهزة
+                <ChevronLeft size={15} />
+              </button>
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-right">
+                <thead className="bg-slate-50 text-xs text-slate-500">
+                  <tr>
+                    <th className="px-5 py-4 font-semibold">الجهاز</th>
+                    <th className="px-5 py-4 font-semibold">النوع</th>
+                    <th className="px-5 py-4 font-semibold">اللون</th>
+                    <th className="px-5 py-4 font-semibold">المساحة</th>
+                    <th className="px-5 py-4 font-semibold">سعر الشراء</th>
+                    <th className="px-5 py-4 font-semibold">الحالة</th>
+                    <th className="px-5 py-4 font-semibold">التفاصيل</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {filteredDevices.map((device) => (
+                    <tr
+                      key={device.id}
+                      className="transition hover:bg-slate-50/70"
+                    >
+                      <td className="px-5 py-4 text-sm font-bold text-[#17283d]">
+                        {device.name}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-slate-500">
+                        {device.type}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-slate-500">
+                        {device.color}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-slate-500">
+                        {device.storage}
+                      </td>
+                      <td className="px-5 py-4 text-xs font-bold text-slate-700">
+                        {formatPrice(device.price)}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span
+                          className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${
+                            device.status === "موجود"
+                              ? "bg-green-50 text-green-600"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {device.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <button
+                          onClick={() => setActivePage("كل الأجهزة")}
+                          className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                          aria-label="تفاصيل الجهاز"
+                        >
+                          <ArrowUpLeft size={17} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredDevices.length === 0 && (
+                <p className="p-8 text-center text-sm text-slate-400">
+                  لا توجد أجهزة مطابقة للبحث.
+                </p>
+              )}
+            </div>
+
+            {/* Mobile device list */}
+            <div className="divide-y divide-slate-100 md:hidden">
+              {filteredDevices.map((device) => (
+                <div key={device.id} className="space-y-3 p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-bold text-[#17283d]">
+                        {device.name}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {device.type} · {device.storage} · {device.color}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-bold ${
+                        device.status === "موجود"
+                          ? "bg-green-50 text-green-600"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {device.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t border-slate-50 pt-3">
+                    <span className="text-xs text-slate-400">سعر الشراء</span>
+                    <span className="text-xs font-bold text-slate-700">
+                      {formatPrice(device.price)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {filteredDevices.length === 0 && (
+                <p className="p-8 text-center text-sm text-slate-400">
+                  لا توجد أجهزة مطابقة للبحث.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom note */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+            <ClipboardList size={15} />
+            <span>Mobile Stock © 2026 - نظام إدارة المحل</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Add device modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#17283d]">
+                إضافة جهاز جديد
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                aria-label="إغلاق"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm leading-7 text-slate-500">
+              هنجهز شاشة إضافة الجهاز كاملة في المرحلة القادمة، وتشمل الموديل
+              واللون والمساحة والسيريال وسعر الشراء وبيانات المورد.
+            </p>
+            <button
+              onClick={() => setShowAddModal(false)}
+              className="mt-5 w-full rounded-xl bg-[#238fcb] py-3 text-sm font-bold text-white hover:bg-[#187eb7]"
+            >
+              تمام
+            </button>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
