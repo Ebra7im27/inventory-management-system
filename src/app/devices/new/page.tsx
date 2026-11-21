@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import { ScanLine } from "lucide-react";
 import {
@@ -67,6 +68,7 @@ export default function AddDevicePage() {
   const [submitted, setSubmitted] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const [scanTarget, setScanTarget] = useState<
     "imei1" | "imei2" | "serialNumber"
@@ -114,8 +116,8 @@ export default function AddDevicePage() {
     setError("");
   };
 
-  // التحقق من البيانات
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // التحقق من البيانات ثم حفظ الجهاز فعليًا في Supabase
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (form.imei1 && form.imei1.length !== 15) {
@@ -137,7 +139,45 @@ export default function AddDevicePage() {
     }
 
     setError("");
-    setSubmitted(true);
+    setSubmitted(false);
+    setSaving(true);
+
+    try {
+      const supabase = createClient();
+      const { error: saveError } = await supabase.from("devices").insert({
+        device_type: form.type,
+        brand: form.brand,
+        model: form.model.trim(),
+        storage: form.storage,
+        color: form.color.trim(),
+        condition: form.condition,
+        imei1: form.imei1 || null,
+        imei2: form.imei2 || null,
+        serial_number: form.serialNumber.trim() || null,
+        purchase_price: Number(form.purchasePrice),
+        purchase_date: form.purchaseDate,
+        supplier_name: form.sellerName.trim() || null,
+        supplier_phone: form.sellerPhone.trim() || null,
+        notes: form.notes.trim() || null,
+        status: "available",
+      });
+
+      if (saveError) {
+        if (saveError.code === "23505") {
+          throw new Error("رقم IMEI أو Serial Number مسجل بالفعل لجهاز آخر.");
+        }
+        throw new Error(saveError.message);
+      }
+
+      setSubmitted(true);
+      router.push("/devices");
+      router.refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "حدث خطأ أثناء حفظ الجهاز.";
+      setError(`لم يتم حفظ الجهاز: ${message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputClass =
@@ -575,11 +615,10 @@ export default function AddDevicePage() {
               <CheckCircle2 size={21} className="shrink-0" />
 
               <div>
-                <p className="font-bold">البيانات اجتازت التحقق بنجاح.</p>
+                <p className="font-bold">تم حفظ الجهاز بنجاح.</p>
 
                 <p className="mt-1 text-xs leading-6">
-                  لم يتم تخزين الجهاز بعد. سنربط زر الحفظ بقاعدة البيانات في
-                  المرحلة القادمة.
+                  تم تسجيل الجهاز في المخزون وقاعدة البيانات.
                 </p>
               </div>
             </div>
@@ -602,10 +641,11 @@ export default function AddDevicePage() {
 
             <button
               type="submit"
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#238fcb] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-100 transition hover:bg-[#187eb7]"
+              disabled={saving}
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#238fcb] px-7 py-3 text-sm font-bold text-white shadow-lg shadow-blue-100 transition hover:bg-[#187eb7] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Save size={18} />
-              التحقق من البيانات
+              {saving ? "جاري الحفظ..." : "حفظ الجهاز"}
             </button>
           </div>
 

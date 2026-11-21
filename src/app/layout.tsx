@@ -9,7 +9,7 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "Mobile Stock | إدارة المحل",
+  title: "OB Store | إدارة المحل",
   description: "نظام إدارة مخزون ومبيعات الأجهزة",
 };
 
