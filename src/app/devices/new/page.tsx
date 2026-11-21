@@ -29,6 +29,7 @@ const initialForm = {
   imei1: "",
   imei2: "",
   serialNumber: "",
+  serialNumber2: "",
   condition: "new",
   purchasePrice: "",
   purchaseDate: new Date().toLocaleDateString("en-CA"),
@@ -71,17 +72,19 @@ export default function AddDevicePage() {
   const [saving, setSaving] = useState(false);
 
   const [scanTarget, setScanTarget] = useState<
-    "imei1" | "imei2" | "serialNumber"
+    "imei1" | "imei2" | "serialNumber" | "serialNumber2"
   >("imei1");
 
-  const openScanner = (field: "imei1" | "imei2" | "serialNumber") => {
+  const openScanner = (field: "imei1" | "imei2" | "serialNumber" | "serialNumber2") => {
     setScanTarget(field);
     setScannerOpen(true);
   };
 
   const handleScan = (value: string) => {
     const scannedValue =
-      scanTarget === "serialNumber" ? value.trim() : normalizeIMEI(value);
+      scanTarget === "serialNumber" || scanTarget === "serialNumber2"
+        ? value.trim()
+        : normalizeIMEI(value);
 
     updateField(scanTarget, scannedValue);
   };
@@ -110,6 +113,7 @@ export default function AddDevicePage() {
       imei1: "",
       imei2: "",
       serialNumber: "",
+      serialNumber2: "",
     }));
 
     setSubmitted(false);
@@ -120,19 +124,25 @@ export default function AddDevicePage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (form.imei1 && form.imei1.length !== 15) {
-      setError("IMEI 1 لازم يكون مكون من 15 رقم بالضبط.");
+    if (form.type === "ipad" && !form.serialNumber.trim()) {
+      setError("من فضلك أدخل Serial Number الخاص بالـ iPad.");
       setSubmitted(false);
       return;
     }
 
-    if (form.imei2 && form.imei2.length !== 15) {
+    if (form.type !== "ipad" && form.imei1 && form.imei1.length !== 15) {
+      setError("IMEI لازم يكون مكون من 15 رقم بالضبط.");
+      setSubmitted(false);
+      return;
+    }
+
+    if (form.type === "mobile" && form.imei2 && form.imei2.length !== 15) {
       setError("IMEI 2 لازم يكون مكون من 15 رقم بالضبط.");
       setSubmitted(false);
       return;
     }
 
-    if (form.imei1 && form.imei2 && form.imei1 === form.imei2) {
+    if (form.type === "mobile" && form.imei1 && form.imei2 && form.imei1 === form.imei2) {
       setError("IMEI 1 و IMEI 2 مينفعش يكونوا متطابقين.");
       setSubmitted(false);
       return;
@@ -154,6 +164,7 @@ export default function AddDevicePage() {
         imei1: form.imei1 || null,
         imei2: form.imei2 || null,
         serial_number: form.serialNumber.trim() || null,
+        serial_number2: form.serialNumber2.trim() || null,
         purchase_price: Number(form.purchasePrice),
         purchase_date: form.purchaseDate,
         supplier_name: form.sellerName.trim() || null,
@@ -405,103 +416,172 @@ export default function AddDevicePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {/* IMEI 1 */}
-              <div>
-                <label className={labelClass}>IMEI 1</label>
-
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={15}
-                    value={form.imei1}
-                    onChange={(e) =>
-                      updateField("imei1", normalizeIMEI(e.target.value))
-                    }
-                    placeholder="أدخل IMEI 1 (15 رقم)"
-                    className={`${inputClass} mt-0 flex-1 min-w-0`}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => openScanner("imei1")}
-                    className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
-                    aria-label="مسح IMEI 1"
-                  >
-                    <ScanLine size={23} />
-                  </button>
+              {form.type === "ipad" ? (
+                <div className="sm:col-span-2">
+                  <label className={labelClass}>Serial Number *</label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      required
+                      value={form.serialNumber}
+                      onChange={(e) => updateField("serialNumber", e.target.value)}
+                      placeholder="أدخل الرقم التسلسلي للـ iPad"
+                      className={`${inputClass} mt-0 flex-1 min-w-0`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openScanner("serialNumber")}
+                      className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
+                      aria-label="مسح Serial Number"
+                    >
+                      <ScanLine size={23} />
+                    </button>
+                  </div>
                 </div>
+              ) : form.type === "tablet" ? (
+                <div className="sm:col-span-2">
+                  <label className={labelClass}>IMEI (اختياري)</label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={15}
+                      value={form.imei1}
+                      onChange={(e) => updateField("imei1", normalizeIMEI(e.target.value))}
+                      placeholder="أدخل IMEI إذا كان التابلت يدعم شريحة (15 رقم)"
+                      className={`${inputClass} mt-0 flex-1 min-w-0`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openScanner("imei1")}
+                      className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
+                      aria-label="مسح IMEI"
+                    >
+                      <ScanLine size={23} />
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-400">{form.imei1.length}/15 رقم</p>
 
-                <p className="mt-2 text-xs text-slate-400">
-                  {form.imei1.length}/15 رقم
-                </p>
-              </div>
+                  <div className="mt-5">
+                    <label className={labelClass}>Serial Number 1 (اختياري)</label>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        value={form.serialNumber}
+                        onChange={(e) => updateField("serialNumber", e.target.value)}
+                        placeholder="أدخل الرقم التسلسلي الأول"
+                        className={`${inputClass} mt-0 flex-1 min-w-0`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openScanner("serialNumber")}
+                        className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
+                        aria-label="مسح Serial Number 1"
+                      >
+                        <ScanLine size={23} />
+                      </button>
+                    </div>
+                  </div>
 
-              {/* IMEI 2 */}
-              <div>
-                <label className={labelClass}>IMEI 2</label>
-
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={15}
-                    value={form.imei2}
-                    onChange={(e) =>
-                      updateField("imei2", normalizeIMEI(e.target.value))
-                    }
-                    placeholder="أدخل IMEI 2 (15 رقم)"
-                    className={`${inputClass} mt-0 flex-1 min-w-0`}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => openScanner("imei2")}
-                    className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
-                    aria-label="مسح IMEI 2"
-                  >
-                    <ScanLine size={23} />
-                  </button>
+                  <div className="mt-5">
+                    <label className={labelClass}>Serial Number 2 (اختياري)</label>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        value={form.serialNumber2}
+                        onChange={(e) => updateField("serialNumber2", e.target.value)}
+                        placeholder="أدخل الرقم التسلسلي الثاني"
+                        className={`${inputClass} mt-0 flex-1 min-w-0`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openScanner("serialNumber2")}
+                        className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
+                        aria-label="مسح Serial Number 2"
+                      >
+                        <ScanLine size={23} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <div>
+                    <label className={labelClass}>IMEI 1</label>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={15}
+                        value={form.imei1}
+                        onChange={(e) => updateField("imei1", normalizeIMEI(e.target.value))}
+                        placeholder="أدخل IMEI 1 (15 رقم)"
+                        className={`${inputClass} mt-0 flex-1 min-w-0`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openScanner("imei1")}
+                        className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
+                        aria-label="مسح IMEI 1"
+                      >
+                        <ScanLine size={23} />
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-400">{form.imei1.length}/15 رقم</p>
+                  </div>
 
-                <p className="mt-2 text-xs text-slate-400">
-                  {form.imei2.length}/15 رقم
-                </p>
-              </div>
+                  <div>
+                    <label className={labelClass}>IMEI 2</label>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={15}
+                        value={form.imei2}
+                        onChange={(e) => updateField("imei2", normalizeIMEI(e.target.value))}
+                        placeholder="أدخل IMEI 2 (15 رقم)"
+                        className={`${inputClass} mt-0 flex-1 min-w-0`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openScanner("imei2")}
+                        className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
+                        aria-label="مسح IMEI 2"
+                      >
+                        <ScanLine size={23} />
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-400">{form.imei2.length}/15 رقم</p>
+                  </div>
 
-              {/* Serial Number */}
-              <div className="sm:col-span-2">
-                <label className={labelClass}>Serial Number</label>
-
-                <div className="mt-2 flex gap-2">
-                  <input
-                    value={form.serialNumber}
-                    onChange={(e) =>
-                      updateField("serialNumber", e.target.value)
-                    }
-                    placeholder="أدخل الرقم التسلسلي"
-                    className={`${inputClass} mt-0 flex-1 min-w-0`}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => openScanner("serialNumber")}
-                    className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
-                    aria-label="مسح Serial Number"
-                  >
-                    <ScanLine size={23} />
-                  </button>
-                </div>
-              </div>
+                  <div className="sm:col-span-2">
+                    <label className={labelClass}>Serial Number</label>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        value={form.serialNumber}
+                        onChange={(e) => updateField("serialNumber", e.target.value)}
+                        placeholder="أدخل الرقم التسلسلي (اختياري)"
+                        className={`${inputClass} mt-0 flex-1 min-w-0`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openScanner("serialNumber")}
+                        className="flex shrink-0 items-center justify-center rounded-xl bg-blue-50 px-4 text-[#238fcb] sm:hidden"
+                        aria-label="مسح Serial Number"
+                      >
+                        <ScanLine size={23} />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="mt-5 flex gap-2 rounded-xl bg-blue-50 p-3 text-xs leading-6 text-blue-700">
               <Info size={17} className="mt-1 shrink-0" />
-
               <p>
-                يمكنك تسجيل IMEI أو Serial Number حسب المتاح في الجهاز. أجهزة
-                Wi-Fi فقط قد لا تحتوي على IMEI. رقم IMEI يتكون من 15 رقمًا،
-                وIMEI 2 اختياري.
+                {form.type === "ipad"
+                  ? "أجهزة iPad: سجّل الرقم التسلسلي فقط؛ لا نطلب IMEI."
+                  : form.type === "tablet"
+                    ? "أجهزة التابلت: يمكنك تسجيل IMEI إذا كان يدعم شريحة اتصال، وإدخال رقمين تسلسليين اختياريًا حسب بيانات الجهاز."
+                    : "الموبايلات: يمكنك تسجيل IMEI 1 وIMEI 2 والرقم التسلسلي حسب المتاح. رقم IMEI يتكون من 15 رقمًا."}
               </p>
             </div>
           </section>
